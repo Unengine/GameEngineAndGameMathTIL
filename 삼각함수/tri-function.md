@@ -52,10 +52,12 @@
 #### 예시
 60도를 호도법으로 표현해보자.
 
-![Example Image](images/1D2Rad.png)
-이므로
+![Example Image](images/1D2Rad.png) 이므로
 ![Example Image](images/ex1.png)
+<<<<<<< HEAD
 
+=======
+>>>>>>> b2302a2760bca2ba224e3e102db6a32d9b2bdbd5
 3 rad를 육십분법으로 표현해보자.
 
 1 rad ![Example Image](images/radProv3.png)
