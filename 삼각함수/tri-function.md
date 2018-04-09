@@ -55,7 +55,7 @@
 ![Example Image](images/1D2Rad.png)
 이므로
 ![Example Image](images/ex1.png)
-----
+
 3 rad를 육십분법으로 표현해보자.
 
 1 rad ![Example Image](images/radProv3.png)
