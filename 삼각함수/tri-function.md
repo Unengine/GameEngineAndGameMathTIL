@@ -6,6 +6,7 @@
 #### 삼각비
 직각삼각형에서 두 길이의 비이다. (직각삼각형에서만 정의됨)
 
+
 ![Example Image](images/Tri-ratio.png)
 
 밑변을 a, 높이를 b, 빗변을 c, 각 b를 θ로 두었을 때
@@ -51,12 +52,14 @@
 #### 예시
 60도를 호도법으로 표현해보자.
 
-![Example Image](images/1D2Rad.png) 이므로
+![Example Image](images/1D2Rad.png)
+이므로
 ![Example Image](images/ex1.png)
 ----
 3 rad를 육십분법으로 표현해보자.
 
-1 rad ![Example Image](images/radProv3.png) 1이므로
+1 rad ![Example Image](images/radProv3.png)
+이므로
 ![Example Image](images/ex2.png)
 * * *
 #### 삼각함수
@@ -80,7 +83,8 @@ X,Y축으로 이루어진 좌표평면에 원을 그리고, 원 위의 임의의
 와 같이 정의된다. 이 세가지를 묶어 **삼각함수** 라고 한다.
 
 ##### 삼각함수 값의 부호
-![Example Image](images/sign.jpg)
+![Example Image](images/sign.png)
+
 삼각함수를 정의할 때 원의 점이 어느 사분면에 있는지에 따라 함수값의 부호가 다르다.
 
 제 1사분면의 점은 모든(All) 함수의 부호가 +고
