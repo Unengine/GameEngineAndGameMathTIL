@@ -7,24 +7,17 @@ public class FSM : MonoBehaviour {
 	Animator ani;
 	Rigidbody2D rd2d;
 	int horizontal;
-	float walkStartTime;
-	float movementSpeed;
+	float walkStartTime = 0;
 
-	bool isFixed;
-	bool isMovable;
-	bool isAttacking;
+	bool isFixed = false;
+	public bool isAttacking = false;
 
 	// Use this for initialization
 	void Start () {
 		ani = GetComponent<Animator>();
 		rd2d = GetComponent<Rigidbody2D>();
 
-		walkStartTime = 0;
-		movementSpeed = 1.5f;
-
-		isFixed = false;
-		isMovable = true;
-		isAttacking = false;
+		ani.SetFloat("movementSpeed", 1.5f);
 
 		StartCoroutine("idle");
 	}
@@ -40,23 +33,24 @@ public class FSM : MonoBehaviour {
 		}
 
 		if(Input.GetKeyDown(KeyCode.Space))
-		{	
-			if(!isAttacking)
+		{
+			if (!isAttacking)
+			{
 				StartCoroutine("attack");
+			}
 		}
 	}
 
 	IEnumerator idle()
 	{
-		ani.SetTrigger("idle");
 		while(true)
 		{
-			//Debug.Log("idle");
 			if(isAttacking)
 			{
 				break;
 			}
-
+			//Debug.Log("idle");
+			ani.SetTrigger("idle");
 			if (horizontal != 0)
 			{
 				StartCoroutine("walk");
@@ -70,13 +64,15 @@ public class FSM : MonoBehaviour {
 
 	IEnumerator walk()
 	{
-		ani.SetTrigger("walk");
+
 		walkStartTime = Time.time;
 		while(true)
 		{
-
+			ani.SetTrigger("walk");
+			ani.SetFloat("movementSpeed", 1.5f);
 			if (isAttacking)
 			{
+				ani.ResetTrigger("walk");
 				break;
 			}
 
@@ -87,13 +83,13 @@ public class FSM : MonoBehaviour {
 				break;
 			}
 
-			if(Time.time - walkStartTime > 2 || isFixed)
+			if(Time.time - walkStartTime > 2 || isFixed || ani.GetFloat("movementSpeed") == 3f)
 			{
 				StartCoroutine("run");
 
 				break;
 			}
-			move(movementSpeed);
+			move(ani.GetFloat("movementSpeed"));
 
 			yield return new WaitForEndOfFrame();
 		}
@@ -102,22 +98,22 @@ public class FSM : MonoBehaviour {
 
 	IEnumerator run()
 	{
-		ani.SetTrigger("run");
-		movementSpeed = 3f;
 		while(true)
 		{
-
+			ani.SetTrigger("run");
+			ani.SetFloat("movementSpeed", 3f);
 			if (isAttacking)
 			{
+				ani.ResetTrigger("run");
 				break;
 			}
 			if (horizontal == 0 && !isFixed)
 			{
-				movementSpeed = 1f;
+				ani.SetFloat("movementSpeed", 1.5f);
 				StartCoroutine("idle");
 				break;
 			}
-			move(movementSpeed);
+			move(ani.GetFloat("movementSpeed"));
 
 			yield return new WaitForEndOfFrame();
 		}
@@ -126,51 +122,55 @@ public class FSM : MonoBehaviour {
 
 	IEnumerator attack()
 	{
-		Debug.Log("attack!");
-
+		ani.Rebind();
 		isAttacking = true;
-		ani.SetTrigger("attack");
 
-		yield return new WaitForSeconds(1);
-
-		while(ani.GetCurrentAnimatorStateInfo(0).IsName("skill_1"))
+		while (ani.GetFloat("attackTime") < 1f)
 		{
+			ani.SetTrigger("attack");
+			ani.SetFloat("attackTime", ani.GetCurrentAnimatorStateInfo(0).normalizedTime);
 			yield return new WaitForEndOfFrame();
 		}
 
 		isAttacking = false;
-		StartCoroutine("idle");
+		yield return new WaitForEndOfFrame();
 
 		ani.ResetTrigger("attack");
-		yield return new WaitForEndOfFrame();
+		if (!isFixed)
+			StartCoroutine("idle");
+		else
+			StartCoroutine("run");
 	}
 
 	void move(float speed)
 	{
+		if (isAttacking) return;
 		//Debug.Log(speed);
 
 		Vector2 newPos = transform.position;
-		Vector3 localScale = transform.localScale;
+		//Vector3 localScale = transform.localScale;
+		Quaternion rot = transform.rotation;
 		if(horizontal > 0)
 		{
-			localScale.x = Mathf.Abs(localScale.x);
+			//localScale.x = Mathf.Abs(localScale.x);
+			rot = Quaternion.Euler(new Vector3(0, 0, 0));
 			newPos += Vector2.right * Time.deltaTime * speed;
 		}
 		else if(horizontal < 0)
 		{
-			localScale.x = -Mathf.Abs(localScale.x);
+			//localScale.x = -Mathf.Abs(localScale.x);
+			rot = Quaternion.Euler(new Vector3(0, 180, 0));
 			newPos += Vector2.left * Time.deltaTime * speed;
 		}
 		else if(isFixed)
 		{
-			Debug.Log("Fixed");
-			if(localScale.x > 0)
-				newPos += Vector2.right * Time.deltaTime * speed;
-			else if(localScale.x < 0)
-				newPos += Vector2.left * Time.deltaTime * speed;
+			newPos += (Vector2)transform.right * Time.deltaTime * speed;
 		}
 
-		transform.localScale = localScale;
+		//transform.localScale = localScale;
+		transform.rotation = rot;
 		rd2d.MovePosition(newPos);
 	}
+
+
 }
