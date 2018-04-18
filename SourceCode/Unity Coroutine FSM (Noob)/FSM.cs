@@ -4,173 +4,185 @@ using UnityEngine;
 
 public class FSM : MonoBehaviour {
 
+	public enum States
+	{
+		idle = 0,
+		walk,
+		run,
+		attack
+	}
+
+	public States state;
 	Animator ani;
 	Rigidbody2D rd2d;
-	int horizontal;
-	float walkStartTime = 0;
 
 	bool isFixed = false;
-	public bool isAttacking = false;
+	bool atkFlag = false;
+	bool isGround = false;
+
+	float horizontal;
+	float movementSpeed;
+	float walkTime = 0;
+	float stopTime = 0;
 
 	// Use this for initialization
 	void Start () {
+		state = States.idle;
 		ani = GetComponent<Animator>();
 		rd2d = GetComponent<Rigidbody2D>();
-
-		ani.SetFloat("movementSpeed", 1.5f);
-
-		StartCoroutine("idle");
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		isFixed = false;
-		horizontal = (int)Input.GetAxisRaw("Horizontal");
 
-		if(Input.GetKey(KeyCode.LeftShift))
+	// Update is called once per frame
+	void Update()
+	{
+		Debug.Log(rd2d.velocity);
+		horizontal = Input.GetAxisRaw("Horizontal");
+		movementSpeed = ani.GetFloat("movementSpeed");
+
+		if (Input.GetKey(KeyCode.LeftShift))
 		{
 			isFixed = true;
+		}
+		else
+		{
+			isFixed = false;
 		}
 
 		if(Input.GetKeyDown(KeyCode.Space))
 		{
-			if (!isAttacking)
-			{
-				StartCoroutine("attack");
-			}
+			state = States.attack;
+		}
+
+		switch(state)
+		{
+			case States.idle:
+				stopTime += Time.deltaTime;
+				StartCoroutine(idle());
+				break;
+			case States.walk:
+				walkTime += Time.deltaTime;
+				StartCoroutine(walk());
+				break;
+			case States.run:
+				StartCoroutine(run());
+				break;
+			case States.attack:
+				if(!atkFlag)
+					StartCoroutine(attack());
+				break;
 		}
 	}
 
 	IEnumerator idle()
 	{
-		while(true)
+		ani.SetTrigger("idle");
+		if (stopTime >= 0.5f)
 		{
-			if(isAttacking)
-			{
-				break;
-			}
-			//Debug.Log("idle");
-			ani.SetTrigger("idle");
-			if (horizontal != 0)
-			{
-				StartCoroutine("walk");
-				break;
-			}
-
-			yield return new WaitForEndOfFrame();
+			walkTime = 0;
 		}
-		ani.ResetTrigger("idle");
+
+		if (horizontal != 0)
+		{
+			ani.ResetTrigger("idle");
+			state = States.walk;
+		}
+		yield return new WaitForEndOfFrame();
 	}
 
 	IEnumerator walk()
 	{
-
-		walkStartTime = Time.time;
-		while(true)
+		stopTime = 0;
+		ani.SetTrigger("walk");
+		ani.SetFloat("movementSpeed", 2);
+		move(movementSpeed);
+		if(horizontal == 0)
 		{
-			ani.SetTrigger("walk");
-			ani.SetFloat("movementSpeed", 1.5f);
-			if (isAttacking)
-			{
-				ani.ResetTrigger("walk");
-				break;
-			}
-
-			if (horizontal == 0)
-			{
-				StartCoroutine("idle");
-
-				break;
-			}
-
-			if(Time.time - walkStartTime > 2 || isFixed || ani.GetFloat("movementSpeed") == 3f)
-			{
-				StartCoroutine("run");
-
-				break;
-			}
-			move(ani.GetFloat("movementSpeed"));
-
-			yield return new WaitForEndOfFrame();
+			ani.ResetTrigger("walk");
+			state = States.idle;
 		}
-		ani.ResetTrigger("walk");
+
+		if(walkTime >= 2 || isFixed)
+		{
+			ani.ResetTrigger("walk");
+			state = States.run;
+		}
+
+		yield return new WaitForEndOfFrame();
 	}
 
 	IEnumerator run()
 	{
-		while(true)
-		{
-			ani.SetTrigger("run");
-			ani.SetFloat("movementSpeed", 3f);
-			if (isAttacking)
-			{
-				ani.ResetTrigger("run");
-				break;
-			}
-			if (horizontal == 0 && !isFixed)
-			{
-				ani.SetFloat("movementSpeed", 1.5f);
-				StartCoroutine("idle");
-				break;
-			}
-			move(ani.GetFloat("movementSpeed"));
+		stopTime = 0;
+		ani.SetTrigger("run");
+		ani.SetFloat("movementSpeed", 10);
+		move(movementSpeed);
 
-			yield return new WaitForEndOfFrame();
+		if (horizontal == 0)
+		{
+			ani.ResetTrigger("run");
+			state = States.idle;
 		}
-		ani.ResetTrigger("run");
+		yield return new WaitForEndOfFrame();
 	}
 
 	IEnumerator attack()
 	{
+		atkFlag = true;
 		ani.Rebind();
-		isAttacking = true;
+		ani.speed = 2f;
 
-		while (ani.GetFloat("attackTime") < 1f)
+		while (ani.GetCurrentAnimatorStateInfo(0).normalizedTime < 1)
 		{
 			ani.SetTrigger("attack");
-			ani.SetFloat("attackTime", ani.GetCurrentAnimatorStateInfo(0).normalizedTime);
 			yield return new WaitForEndOfFrame();
 		}
 
-		isAttacking = false;
-		yield return new WaitForEndOfFrame();
-
 		ani.ResetTrigger("attack");
-		if (!isFixed)
-			StartCoroutine("idle");
-		else
-			StartCoroutine("run");
+		state = States.idle;
+		ani.speed = 1;
+		atkFlag = false;
 	}
 
 	void move(float speed)
 	{
-		if (isAttacking) return;
-		//Debug.Log(speed);
-
-		Vector2 newPos = transform.position;
+		Vector2 newPos = Vector2.zero;
 		//Vector3 localScale = transform.localScale;
 		Quaternion rot = transform.rotation;
-		if(horizontal > 0)
+		if (horizontal > 0)
 		{
 			//localScale.x = Mathf.Abs(localScale.x);
 			rot = Quaternion.Euler(new Vector3(0, 0, 0));
-			newPos += Vector2.right * Time.deltaTime * speed;
+			newPos = Vector2.right * Time.deltaTime * speed;
 		}
-		else if(horizontal < 0)
+		else if (horizontal < 0)
 		{
 			//localScale.x = -Mathf.Abs(localScale.x);
 			rot = Quaternion.Euler(new Vector3(0, 180, 0));
-			newPos += Vector2.left * Time.deltaTime * speed;
+			newPos = Vector2.left * Time.deltaTime * speed;
 		}
-		else if(isFixed)
+		else if (isFixed)
 		{
-			newPos += (Vector2)transform.right * Time.deltaTime * speed;
+			newPos = (Vector2)transform.right * Time.deltaTime * speed;
 		}
 
 		//transform.localScale = localScale;
 		transform.rotation = rot;
-		rd2d.MovePosition(newPos);
+		rd2d.MovePosition((Vector2)transform.position + newPos);
 	}
 
+	void OnCollisionEnter2D(Collision2D col)
+	{
+		if(col.transform.tag == "Ground")
+		{
+			isGround = true;
+		}
+	}
 
+	void OnCollisionExit2D(Collision2D col)
+	{
+		if(col.transform.tag == "Ground")
+		{
+			isGround = false;
+		}
+	}
 }
