@@ -18,10 +18,12 @@ public class FSM : MonoBehaviour {
 
 	bool isFixed = false;
 	bool atkFlag = false;
+	bool jumpFlag = false;
 	bool isGround = false;
 
 	float horizontal;
 	float movementSpeed;
+	float jumpPower;
 	float walkTime = 0;
 	float stopTime = 0;
 
@@ -30,16 +32,16 @@ public class FSM : MonoBehaviour {
 		state = States.idle;
 		ani = GetComponent<Animator>();
 		rd2d = GetComponent<Rigidbody2D>();
+		jumpPower = GetComponent<KnightStat>().getJumpPower();
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
-		Debug.Log(rd2d.velocity);
 		horizontal = Input.GetAxisRaw("Horizontal");
 		movementSpeed = ani.GetFloat("movementSpeed");
 
-		if (Input.GetKey(KeyCode.LeftShift))
+		if (Input.GetKey(KeyCode.LeftShift) && isGround)
 		{
 			isFixed = true;
 		}
@@ -48,7 +50,12 @@ public class FSM : MonoBehaviour {
 			isFixed = false;
 		}
 
-		if(Input.GetKeyDown(KeyCode.Space))
+		if(Input.GetKeyDown(KeyCode.Space) && isGround)
+		{
+			jump();
+		}
+
+		if(Input.GetKeyDown(KeyCode.RightShift))
 		{
 			state = States.attack;
 		}
@@ -113,6 +120,7 @@ public class FSM : MonoBehaviour {
 	IEnumerator run()
 	{
 		stopTime = 0;
+		ani.ResetTrigger("walk");
 		ani.SetTrigger("run");
 		ani.SetFloat("movementSpeed", 10);
 		move(movementSpeed);
@@ -167,7 +175,10 @@ public class FSM : MonoBehaviour {
 
 		//transform.localScale = localScale;
 		transform.rotation = rot;
-		rd2d.MovePosition((Vector2)transform.position + newPos);
+
+		//rigidbody2d.MovePosition 는 주어진 벡터로 이동하도록 힘을 가함.
+		if(isGround)
+			rd2d.MovePosition((Vector2)transform.position + newPos);
 	}
 
 	void OnCollisionEnter2D(Collision2D col)
@@ -185,4 +196,23 @@ public class FSM : MonoBehaviour {
 			isGround = false;
 		}
 	}
+
+	void jump()
+	{
+		jumpFlag = true;
+		rd2d.AddForce(Vector2.up * jumpPower);
+		jumpFlag = false;
+	}
+
+	/*
+	public void OnDrawGizmos()
+	{
+		RaycastHit2D hit;
+		hit = Physics2D.BoxCast(transform.position + new Vector3(2f,1), new Vector2(1f, 1.5f), 0, transform.TransformDirection(transform.right), 1);
+		Gizmos.color = Color.red;
+		Gizmos.DrawLine(transform.position + new Vector3(2f, 1), transform.position + Vector3.right * 3.5f + Vector3.up);
+		if (hit)
+			Gizmos.DrawCube(transform.position + new Vector3(2f, 1), new Vector2(3f, 1.5f));
+	}
+	*/
 }

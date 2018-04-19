@@ -4,7 +4,15 @@ using UnityEngine;
 
 public class CameraEffect : MonoBehaviour {
 
+	Transform target;
+	CameraFollow camFollow;
 	bool isShaking = false;
+
+	void Start()
+	{
+		target = GameObject.Find("black_knight").transform;
+		camFollow = GetComponent<CameraFollow>();
+	}
 
 	public void shakeCamera(float range,float duration)
 	{
@@ -18,11 +26,11 @@ public class CameraEffect : MonoBehaviour {
 		fxMessage();
 		float range = (float)param[0];
 		float duration = (float)param[1];
-		Vector3 origin = transform.position;
 
 		int frame = (int)(duration / Time.deltaTime);
 		for (int i = 0; i < frame; i++)
 		{
+			Vector3 origin = camFollow.getTargetPos();
 			float x = Random.Range(-range, range);
 			float y = Random.Range(-range, range);
 			transform.position = new Vector3(origin.x + x, origin.y + y, transform.position.z);

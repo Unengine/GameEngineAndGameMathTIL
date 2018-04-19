@@ -15,11 +15,11 @@ public class CameraFollow : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		targetPos = target.position;
+		targetPos = target.position + new Vector3(0, 3);
 
 		if (!isFX)
 		{
-			transform.position = lerpVector(transform.position, targetPos + new Vector3(0, 3), Time.deltaTime * 2);
+			transform.position = lerpVector(transform.position, targetPos, Time.deltaTime * 2);
 		}
 	}
 
@@ -37,5 +37,10 @@ public class CameraFollow : MonoBehaviour {
 	public void set_isFX(bool condition)
 	{
 		isFX = condition;
+	}
+
+	public Vector3 getTargetPos()
+	{
+		return targetPos;
 	}
 }
