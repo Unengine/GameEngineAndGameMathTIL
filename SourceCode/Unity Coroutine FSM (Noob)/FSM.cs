@@ -23,6 +23,8 @@ public class FSM : MonoBehaviour {
 
 	float horizontal;
 	float movementSpeed;
+	float currentSpeed;
+	float lastSpeed;
 	float jumpPower;
 	float walkTime = 0;
 	float stopTime = 0;
@@ -33,11 +35,18 @@ public class FSM : MonoBehaviour {
 		ani = GetComponent<Animator>();
 		rd2d = GetComponent<Rigidbody2D>();
 		jumpPower = GetComponent<KnightStat>().getJumpPower();
+
+		currentSpeed = transform.position.x;
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
+		lastSpeed = currentSpeed;
+		currentSpeed = transform.position.x;
+		float delta = currentSpeed - lastSpeed;
+
+		Debug.Log(delta);
 		horizontal = Input.GetAxisRaw("Horizontal");
 		movementSpeed = ani.GetFloat("movementSpeed");
 
@@ -177,8 +186,14 @@ public class FSM : MonoBehaviour {
 		transform.rotation = rot;
 
 		//rigidbody2d.MovePosition 는 주어진 벡터로 이동하도록 힘을 가함.
-		if(isGround)
+		if (isGround)
+		{
 			rd2d.MovePosition((Vector2)transform.position + newPos);
+		}
+		else
+		{
+			rd2d.AddForce(newPos * 100, ForceMode2D.Impulse);
+		}
 	}
 
 	void OnCollisionEnter2D(Collision2D col)
